@@ -22,7 +22,7 @@ data earns credit; *"80% seemed reasonable"* does not.
 ## 1. A matching query completes all three tools
 
 Given a query that matches at least one listing, the agent completes all three
-tool calls and returns a fit card — in at least 4 of 5 tries.
+tool calls and returns a fit card — in at least 5 of 5 tries.
 
 **Why this target:**
 <!-- Why 4 of 5 and not 5 of 5? Something about your search, probably —
@@ -34,7 +34,7 @@ The search is a plain keyword match and some phrasings will miss. It is possible
 ## 2. An impossible query stops before the second tool
 
 Given a query that matches no listings, the agent stops before calling
-`suggest_outfit` and returns a message naming what to change — 5 of 5 tries.
+`suggest_outfit` and returns a message which names names at least one of: the search words, the size, or the price - 5 of 5 tries
 
 **Why this target:**
 <!-- Why is 5 of 5 reasonable here when criterion 1 isn't? What's different
@@ -61,7 +61,7 @@ The selected item from the search_listings output should always be the same item
 ---
 
 ## 4. Fit card includes price of item
-The fitcard includes the price of the selected item at least 4 out of 5 times.
+The fitcard includes the price of the selected item at least 4 out of 5 times. The price counts if it appears as digits or as words, hyphenated or not."
 <!-- YOU WRITE THIS ONE.
 
      The fit card calls a model, so the same input can produce different words
@@ -90,7 +90,7 @@ When suggest_outfits outputs it's suggestion, it contains at least two possible 
      or an observable outcome. -->
 
 **Why this target:**
-I chose 3 out of 5 times for this criteria becasue it's possible that the user doesn't have a lot of items in the current wardrode that would go with the selected item. But I feel like since there are a lot of style_tags and colors for the items, at least 2 outfits should be contained in at least 3 tries.
+I chose 3 out of 5 times for this criteria becasue it's possible that the user doesn't have a lot of items in the current wardrode that would go with the selected item. But I feel like since there are a lot of style_tags and colors for the items, at least 2 outfits should be contained in at least 3 tries. Additionally, a wardrobe could be empty.
 
 ---
 

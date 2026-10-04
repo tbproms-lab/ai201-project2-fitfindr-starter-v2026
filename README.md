@@ -127,9 +127,23 @@ First the new session is started, then the query is parsed in order to call sear
 **One full query**
 
 ```
-$ python app.py ask '...'
+$ python app.py ask 'vintage graphic tee under $30, size M'
 
 ```
+
+  Found:    Y2K Baby Tee — Butterfly Print — $18.0 on depop
+
+  Outfit:   Outfit 1: Y2K Baby Tee — Butterfly Print paired with Baggy straight-leg jeans, dark wash, Chunky white sneakers, and Black crossbody bag.
+Why it works: The fitted crop balances the baggy indigo denim for an authentic Y2K streetwear silhouette.
+
+Outfit 2: Y2K Baby Tee — Butterfly Print layered under Oversized grey crewneck sweatshirt, worn with Wide-leg khaki trousers, Chunky white sneakers, and Black crossbody bag.
+Why it works: The pastel butterfly graphic pops against grey and khaki, and layering a baby tee under an oversized crewneck plays with proportions.
+
+Wear these for casual daytime outings like running errands, thrift shopping, or meeting friends for coffee.
+
+  Fit card: Scored this Y2K baby tee on depop for eighteen dollars and I am obsessed with the little butterfly print. It fits like a dream under my oversized grey crewneck sweatshirt for coffee runs today. The pastel colors look so good against khaki trousers.
+
+3 model calls this session, 1103 prompt + 219 output tokens
 
 **The three tools, tested one at a time**
 
@@ -173,15 +187,18 @@ These vintage Levi's 501 jeans finally arrived from depop after I stalked listin
 - *What I asked for:*
 I gave Claude the istructions to create the tools for the agent as well as what I wanted it to do apart from the instructions
 - *What came back:*
-It created the code for search_listings, suggest_outfit, and create_fit_card
+It created the code for search_listings, suggest_outfit, and create_fit_card.
 - *What I changed:*
-I didn't cha
+I didn't change anything, I just guided it on what to add and modify while it was creating it.
 
 **Moment 2**
 
 - *What I asked for:*
+I told Claude to analyze my criteria to ensure it was observable and measurable.
 - *What came back:*
+It completely analyzed my criteria, telling me where the mesaureable gaps are in the criteria I made.
 - *What I changed:*
+I updated my criteria to have more measurable outcomes. For example, for the critera on price, I clarified that price could be any kind- digits, hyphenated or non-hyphenated words.
 
 <!-- ═══════════════════════ UNIT 4 — THE TEST ═══════════════════════
 
