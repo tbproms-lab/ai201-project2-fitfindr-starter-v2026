@@ -288,6 +288,13 @@ def suggest_outfit(new_item: dict, wardrobe: dict) -> str:
 
 # ── Tool 3: create_fit_card ───────────────────────────────────────────────────
 
+_FIT_CARD_SYSTEM = (
+    "You write the caption that goes with a thrift find — the kind a person "
+    "posts, not the kind a shop writes. First person, present tense, plain "
+    "sentences. Two to four sentences and nothing else: no headings, no bullet "
+    "points, no preamble, no quotation marks around the caption."
+)
+
 def create_fit_card(outfit: str, new_item: dict) -> str:
     """
     Write a short caption someone would actually post about the find.
@@ -322,5 +329,37 @@ def create_fit_card(outfit: str, new_item: dict) -> str:
     Test it from a terminal before you move on:
         python -c "from tools import create_fit_card; from utils.data_loader import load_listings; print(create_fit_card('jeans and white sneakers', load_listings()[0]))"
     """
-    # TODO: replace this with your implementation
-    return ""
+    item = new_item or {}
+    title = item.get("title") or "this item"
+
+    # suggest_outfit promises a non-empty string, but this tool is called on
+    # its own too, and there's nothing to caption without an outfit.
+    if not (outfit or "").strip():
+        return (
+            f"No fit card for the {title} — there's no outfit to caption. "
+            f"Run suggest_outfit first and pass what it returns."
+        )
+
+    price = item.get("price")
+    price_text = f"${price:.2f}" if isinstance(price, (int, float)) else "the listed price"
+    platform = item.get("platform") or "the app"
+
+    prompt = (
+        "Someone just found this second-hand and is posting about it:\n\n"
+        f"{_item_summary(item)}\n\n"
+        "Here is how they plan to wear it:\n\n"
+        f"{outfit.strip()}\n\n"
+        f"Write their caption. Work in the piece itself, the {price_text} it "
+        f"cost, and that it came from {platform} — each exactly once, woven "
+        "into the sentences rather than listed. Be specific about the vibe and "
+        "where they'd wear it; name something concrete from the outfit above "
+        "instead of calling it 'a great look'."
+    )
+
+    caption = generate(prompt, system=_FIT_CARD_SYSTEM).strip()
+    if not caption:
+        return (
+            f"No caption came back for the {title}. Try again — the outfit "
+            f"suggestion itself is fine."
+        )
+    return caption

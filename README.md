@@ -151,10 +151,12 @@ Works because the fitted tank balances the straight-leg denim and the cropped ja
 Outfit 2: Vintage Levi's 501 Jeans — Medium Wash + Oversized grey crewneck sweatshirt + Black combat boots + Brown leather belt + Black crossbody bag
 Works because the chunky boots ground the boxy sweatshirt, and the belt ties the indigo wash together for a casual coffee run.
 ```
-$ python -c "from tools import create_fit_card; ..."
+$ python -c "from tools import create_fit_card; from utils.data_loader import load_listings; item = load_listings()[0]; print('ITEM:', item['title'], '|', item['platform'], '| \$', item['price']); print(); print(create_fit_card('baggy jeans and white sneakers', item))"
 
 ```
+ITEM: Vintage Levi's 501 Jeans — Medium Wash | depop | $ 38.0
 
+These vintage Levi's 501 jeans finally arrived from depop after I stalked listings for weeks. They only set me back thirty-eight dollars, which feels like a steal for denim this broken-in. I am wearing them super baggy with crisp white sneakers for running weekend errands around the neighborhood.
 ---
 
 ## How I Used AI
@@ -169,8 +171,11 @@ $ python -c "from tools import create_fit_card; ..."
 **Moment 1**
 
 - *What I asked for:*
+I gave Claude the istructions to create the tools for the agent as well as what I wanted it to do apart from the instructions
 - *What came back:*
+It created the code for search_listings, suggest_outfit, and create_fit_card
 - *What I changed:*
+I didn't cha
 
 **Moment 2**
 
