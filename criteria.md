@@ -90,7 +90,7 @@ When suggest_outfits outputs it's suggestion, it contains at least two possible 
      or an observable outcome. -->
 
 **Why this target:**
-I chose 3 out of 5 times for thsi criteria becasue it's possible that the user doesn't have a lot of items in the current wardrode that would go with the selected item. But I feel like since there are a lot of style_tags and colors for the items, at least 2 outfits should be contained in at least 3 tries.
+I chose 3 out of 5 times for this criteria becasue it's possible that the user doesn't have a lot of items in the current wardrode that would go with the selected item. But I feel like since there are a lot of style_tags and colors for the items, at least 2 outfits should be contained in at least 3 tries.
 
 ---
 

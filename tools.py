@@ -21,7 +21,7 @@ the description has to say what is *in* the list.
 """
 
 import re
-import config  # noqa: F401 — you'll use this in search_listings
+import config
 from generate import generate
 from utils.data_loader import load_listings
 
@@ -30,7 +30,11 @@ from utils.data_loader import load_listings
 
 _STOPWORDS = {"a", "an", "the", "and", "or", "but", "in","on", "at",
                "to", "for", "with", "above", "below", "from", "by",
-               "as", "is", "was", "are", "were", "been", "being"}
+               "as", "is", "was", "are", "were", "been", "being",
+               "looking", "look", "want", "need", "find", "show", "me", "my",
+               "something", "really", "very", "just", "great", "perfect",
+               "nice", "good", "some", "no", "any", "like", "of", "it", "its",
+               "this", "that", "be", "can", "under", "over", "size"}
 
 def _keywords(text: str) -> set[str]:
     """Lowercase words worth matching on, stopwords removed."""
@@ -39,8 +43,23 @@ def _keywords(text: str) -> set[str]:
 
 def _size_tokens(size: str) -> set[str]:
     cleaned = re.sub(r"\([^)]*\)", " ", size or "") # drop parenthesized parts
-    parts = [p.strip().upper() for p in cleaned.split("/")]
-    return {p for p in parts if p}
+    tokens = set()
+    for part in cleaned.split("/"):
+        part = " ".join(part.split()).upper()  # collapse runs of whitespace
+        if not part:
+            continue
+        tokens.add(part)
+        # "W30 L30" should answer to "W30". Only waist/length pieces get split
+        # on whitespace — splitting every size would put "US" in both "US 8"
+        # and "US 9", and then every shoe matches every other shoe.
+        if re.fullmatch(r"[WL]\d+(?: [WL]\d+)+", part):
+            tokens.update(part.split())
+        # "US 9" should also answer to a plain "9" or a spaceless "US9".
+        shoe = re.fullmatch(r"US ?(\d+(?:\.\d+)?)", part)
+        if shoe:
+            tokens.add(shoe.group(1))
+            tokens.add("US" + shoe.group(1))
+    return tokens
 
 def _size_matches(wanted: str, listing_size: str) -> bool:
     if not wanted:
@@ -49,6 +68,38 @@ def _size_matches(wanted: str, listing_size: str) -> bool:
     if any(token.startswith("ONE SIZE") for token in listing_tokens):
         return True
     return bool(_size_tokens(wanted) & listing_tokens)
+
+# What a keyword match is worth, depending on where it lands. The same word
+# says more from a title or a style tag than it does buried in the prose.
+_FIELD_WEIGHTS = {
+    "title": 3,
+    "style_tags": 3,
+    "category": 2,
+    "colors": 2,
+    "brand": 2,
+    "description": 1,
+}
+
+def _field_text(listing: dict, field: str) -> str:
+    """One searchable string for a field, whether it holds a list, a str, or None."""
+    value = listing.get(field)
+    if isinstance(value, list):
+        return " ".join(str(v) for v in value)
+    return str(value or "")  # brand is None on most listings
+
+def _word_matches(keyword: str, word: str) -> bool:
+    """Whole-word match, forgiving a trailing plural s on either side."""
+    return keyword == word or keyword == word + "s" or word == keyword + "s"
+
+def _score(keywords: set[str], listing: dict) -> int:
+    """How well one listing answers the keywords. Zero means no overlap at all."""
+    total = 0
+    for field, weight in _FIELD_WEIGHTS.items():
+        words = _keywords(_field_text(listing, field))
+        for keyword in keywords:
+            if any(_word_matches(keyword, word) for word in words):
+                total += weight
+    return total
 
 def search_listings(
     description: str,
@@ -101,8 +152,24 @@ def search_listings(
     Test it from a terminal before you move on:
         python -c "from tools import search_listings; print(search_listings('graphic tee', max_price=30))"
     """
-    # TODO: replace this with your implementation
-    return []
+    keywords = _keywords(description)
+    if not keywords:
+        return []
+
+    scored = []
+    for listing in load_listings():
+        if max_price is not None and listing["price"] > max_price:
+            continue
+        if not _size_matches(size, listing["size"]):
+            continue
+        score = _score(keywords, listing)
+        if score > 0:
+            scored.append((score, listing))
+
+    # Best match first; a cheaper item wins a tie, which also keeps the order
+    # stable so the agent picks the same item on every run.
+    scored.sort(key=lambda pair: (-pair[0], pair[1]["price"]))
+    return [listing for _, listing in scored[:config.SEARCH_RESULT_LIMIT]]
 
 
 # ── Tool 2: suggest_outfit ────────────────────────────────────────────────────
