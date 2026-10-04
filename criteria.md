@@ -28,7 +28,7 @@ tool calls and returns a fit card — in at least 4 of 5 tries.
 <!-- Why 4 of 5 and not 5 of 5? Something about your search, probably —
      "my search is a plain keyword match and some phrasings will miss" is a
      real answer. -->
-
+The search is a plain keyword match and some phrasings will miss. It is possible that a fit card won't be returned 5 out of 5 times, but 4 out of 5 times is feasible since the search tool is quite accurate.
 ---
 
 ## 2. An impossible query stops before the second tool
@@ -39,10 +39,11 @@ Given a query that matches no listings, the agent stops before calling
 **Why this target:**
 <!-- Why is 5 of 5 reasonable here when criterion 1 isn't? What's different
      about this path? -->
-
+5 out of 5 is reasonable here because this is the main part of the branch loop to stop a session when nothing matches. This should always happen is search_listings returns an empty list.
 ---
 
-## 3. Something about state
+## 3. States match across tools
+The selected item from search_listings should be the same item used in suggest_outfit - 5 of 5 tries.
 
 <!-- YOU WRITE THIS ONE.
 
@@ -54,16 +55,13 @@ Given a query that matches no listings, the agent stops before calling
      compares session["selected_item"] against what actually reached
      suggest_outfit is the shape you're after. -->
 
-
-
 **Why this target:**
-
-
+The selected item from the search_listings output should always be the same item that gets run through sugges_outfits. If they are not, this is a tool problem that should be addressed, even if it's just one miss.
 
 ---
 
-## 4. Something about the fit card
-
+## 4. Fit card includes price of item
+The fitcard includes the price of the selected item at least 4 out of 5 times.
 <!-- YOU WRITE THIS ONE.
 
      The fit card calls a model, so the same input can produce different words
@@ -75,15 +73,14 @@ Given a query that matches no listings, the agent stops before calling
      sentence? A card longer than a caption anyone would post? Any of those can
      be turned into a number. -->
 
-
-
 **Why this target:**
-
+Even though all the items include prices, since fit card calls the model, it is possible that some fit card descriptiions would not include the price of the item. But it should include item price at least 4 out of 5 times.
 
 
 ---
 
-## 5. Your choice
+## 5. At least 2 outfits suggested
+When suggest_outfits outputs it's suggestion, it contains at least two possible outfit suggestions for the item - at least 3 out of 5 times.
 
 <!-- YOU WRITE THIS ONE TOO.
 
@@ -92,11 +89,8 @@ Given a query that matches no listings, the agent stops before calling
      search respects a price ceiling — anything, as long as it names a number
      or an observable outcome. -->
 
-
-
 **Why this target:**
-
-
+I chose 3 out of 5 times for thsi criteria becasue it's possible that the user doesn't have a lot of items in the current wardrode that would go with the selected item. But I feel like since there are a lot of style_tags and colors for the items, at least 2 outfits should be contained in at least 3 tries.
 
 ---
 
