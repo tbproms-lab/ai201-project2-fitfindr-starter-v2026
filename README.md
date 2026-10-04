@@ -60,23 +60,35 @@
 ### `search_listings`
 
 - **What it does:**
+search_listings searches the listings data for items matching a description, and optionally a size and a price ceiling.
 - **Inputs:** <!-- name and type each: `max_price` (float), not "a price" -->
+It needs a description (string) which are keywords describing what the user wants. A size (string) which helps filter the listings based on size. And an inclusize max_price (float) which can also be None to skip filtering based on price.
 - **Returns:**
+It returns a list of matching listings in dictionary format. Each listing dict has these fields: id, title, description, category, style_tags (list), size, condition, price (float), colors (list), brand (str or None), platform.
 - **When it has nothing:**
+When there is no match in the listings data, it returns an empty list, not None, and not an exception.
 
 ### `suggest_outfit`
 
 - **What it does:**
+suggest_outfit suggest one or two outfits to the user when given a thrifted item and the user's wardrobe.
 - **Inputs:**
+It takes a new item (a listing dict) that the user is considering, a wardrobe dict with an 'items' key holding a list of items. The wardrobe dictionary could be empty.
 - **Returns:**
+A non-empty string with outfit suggestions.
 - **When it has nothing:**
+If the wardrobe was empty, it returns general styling advice rather than raising or returning "".
 
 ### `create_fit_card`
 
 - **What it does:**
+create_fit_card writes a short caption someone would actually post about the find.
 - **Inputs:**
+It takes the outfit suggesting (string) that suggest_outfit gave. It also takes the new item (a listing dict) that the user was considering.
 - **Returns:**
+A two-to-four sentence caption that should read like a real post rather than a product description, mention the item and its price and platform once each, and be specific about the vibe.
 - **When it has nothing:**
+If outfit is empty or whitespace, it should return a descriptive message rather than raising and error.
 
 ---
 
@@ -94,13 +106,13 @@
      function have to be real. -->
 
 **Branch rule:**
-
-**Where it lives:** `agent.py::run_agent`
-
+If search_listings returns an empty list, it puts a message in session["error"] saying what the user could change to get results, and returns the session. It does not call suggest_outfit with nothing/an empty list. Otherwise, take the first result in the list[dict] (the item that most matched the query) and calls suggest_outfit with it.
+**Where it lives:** 
+`agent.py::run_agent`
 **How the query is parsed:** <!-- regex, string splitting, or asking the model — say which -->
-
+The query should be parsed by asking the model becasue it can handle messy user input and has natural langauge processing to sort through the query.
 **What moves through the session:** <!-- which fields, in what order -->
-
+First the new session is started, then the query is parsed in order to call search_listings. search_listings returns a list[dict] and the first listing dict is used to call suggest_outfits which returns an outfit suggestion sentence which is used to call fit_card to create a post worthy caption. The session is over.
 ---
 
 ## Sample Run
