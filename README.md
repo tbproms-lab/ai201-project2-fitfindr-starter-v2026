@@ -41,7 +41,7 @@
 
 <!-- Three or four sentences: what a user asks for, and what they get back. -->
 
-
+FitFindr is a multi-tool agent that helps a user find a thrifted piece and figure out how to wear it. The user asks in plain language for what they want, such as "vintage graphic tee under $30, size M". The agent searches a catalogue of secondhand listings, picks the best match, and suggests one or two outfits that combine it with pieces from the user's own wardrobe. It then writes a short, post-ready caption about the find, or, if nothing matches, tells the user which part of the request to change.
 
 ---
 
