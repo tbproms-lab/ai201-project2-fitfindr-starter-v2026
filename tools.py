@@ -174,6 +174,52 @@ def search_listings(
 
 # ── Tool 2: suggest_outfit ────────────────────────────────────────────────────
 
+_OUTFIT_SYSTEM = (
+    "You are a thrift stylist helping someone decide whether a second-hand find "
+    "will work with what they already own. Be concrete about colour, silhouette "
+    "and when they'd wear it. Never invent clothing you haven't been told about. "
+    "No preamble, no markdown headings, under 150 words."
+)
+
+def _item_summary(item: dict) -> str:
+    """The listing, written out for the model. Skips fields the data doesn't have."""
+    lines = [f"Title: {item.get('title') or 'unknown item'}"]
+    if item.get("brand"):  # None on most listings — better silent than "Brand: None"
+        lines.append(f"Brand: {item['brand']}")
+    lines.append(f"Category: {item.get('category') or 'not stated'}")
+    lines.append(f"Colors: {', '.join(item.get('colors') or []) or 'not stated'}")
+    lines.append(f"Style tags: {', '.join(item.get('style_tags') or []) or 'not stated'}")
+    lines.append(f"Size: {item.get('size') or 'not stated'}")
+    lines.append(f"Condition: {item.get('condition') or 'not stated'}")
+
+    price = item.get("price")
+    platform = item.get("platform") or "an unnamed platform"
+    if isinstance(price, (int, float)):
+        lines.append(f"Price: ${price:.2f} on {platform}")
+    else:
+        lines.append(f"Listed on {platform}")
+
+    if item.get("description"):
+        lines.append(f"Seller's description: {item['description']}")
+    return "\n".join(lines)
+
+def _wardrobe_lines(items: list[dict]) -> str:
+    """One bullet per owned piece, so the model can name them back exactly."""
+    lines = []
+    for item in items:
+        details = [d for d in (
+            item.get("category"),
+            ", ".join(item.get("colors") or []),
+            ", ".join(item.get("style_tags") or []),
+        ) if d]
+        line = f"- {item.get('name') or 'unnamed item'}"
+        if details:
+            line += f" ({'; '.join(details)})"
+        if item.get("notes"):  # optional in the schema, and null on several items
+            line += f" — {item['notes']}"
+        lines.append(line)
+    return "\n".join(lines)
+
 def suggest_outfit(new_item: dict, wardrobe: dict) -> str:
     """
     Given a thrifted item and the user's wardrobe, suggest one or two outfits.
@@ -202,8 +248,42 @@ def suggest_outfit(new_item: dict, wardrobe: dict) -> str:
     Test it from a terminal before you move on:
         python -c "from tools import suggest_outfit; from utils.data_loader import get_example_wardrobe, load_listings; print(suggest_outfit(load_listings()[0], get_example_wardrobe()))"
     """
-    # TODO: replace this with your implementation
-    return ""
+    # A missing 'items' key and an empty list are the same situation to us.
+    items = (wardrobe or {}).get("items") or []
+    item_text = _item_summary(new_item or {})
+
+    if not items:
+        prompt = (
+            "Someone is considering this second-hand item:\n\n"
+            f"{item_text}\n\n"
+            "Their wardrobe is empty, so you don't know a single thing they own "
+            "and must not guess. Suggest two ways to style this piece around "
+            "common staples, naming the staples plainly — \"straight-leg blue "
+            "jeans\", \"plain white tee\" — so they can check what they have. "
+            "Finish with one line on what to pair with it next."
+        )
+    else:
+        prompt = (
+            "Someone is considering this second-hand item:\n\n"
+            f"{item_text}\n\n"
+            f"Here is their whole wardrobe, {len(items)} pieces:\n\n"
+            f"{_wardrobe_lines(items)}\n\n"
+            "Suggest one or two outfits combining the item with pieces from that "
+            "list. Use only pieces from the list, and name each one exactly as it "
+            "is written there so they can tell which is which. Give each outfit "
+            "one line on why it works."
+        )
+
+    suggestion = generate(prompt, system=_OUTFIT_SYSTEM).strip()
+    if not suggestion:
+        # The contract is a non-empty string, so a silent model doesn't get to
+        # hand the loop an empty one — create_fit_card branches on this.
+        return (
+            f"No styling ideas came back for the "
+            f"{new_item.get('title', 'item') if new_item else 'item'}. "
+            f"Try again, or pick another item from the search results."
+        )
+    return suggestion
 
 
 # ── Tool 3: create_fit_card ───────────────────────────────────────────────────
