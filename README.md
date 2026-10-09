@@ -398,24 +398,33 @@ search_listings used to be imported and called directly in agent.py. I moved it 
 
 **What I changed:**
 
+One change, in `tools.py::_score` (used by `search_listings`): a listing now has to match **every** keyword in the query, somewhere in its title, style tags, category, colours, brand or description. Before, one matching keyword was enough (OR). Now a listing that misses any keyword scores 0 and is dropped. Nothing else changed: no weights, filters, loop or prompts.
+
 **Which failure it was meant to fix:**
+
+The ranking problem from the diagnosis: `search_listings` returned loosely related items (Biker Shorts for "black leather jacket", a hoodie and a sweatshirt for "graphic tee") because OR matching let one word like "black" or "tee" get a listing in.
 
 ### Run Log — After
 
+Source: `results/run_2026-10-08_2351_after.md`.
+
 | Criterion | Target | Try 1 | Try 2 | Try 3 | Try 4 | Try 5 | Verdict |
 |---|---|---|---|---|---|---|---|
-| 1.  |  |  |  |  |  |  |  |
-| 2.  |  |  |  |  |  |  |  |
-| 3.  |  |  |  |  |  |  |  |
-| 4.  |  |  |  |  |  |  |  |
-| 5.  |  |  |  |  |  |  |  |
+| 1. Matching query completes all three tools | 5 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
+| 2. Impossible query stops before `suggest_outfit` | 5 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
+| 3. Selected item reaches `suggest_outfit` | 5 of 5 | n/a | n/a | n/a | n/a | n/a | NOT MEASURABLE on its scenario (see below); 15/15 on the other scenarios |
+| 4. Fit card includes the item's price | 4 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
+| 5. At least two outfits suggested | 3 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
 
 **Did it help, and how do I know:**
 
-<!-- If it made things worse, say that. Honestly reported, that earns full
-     credit and is more interesting than one that worked. -->
+It fixed the relevance problem, and it exposed a gap in how I measure criterion 3.
 
-
+- **Search results are tighter.** `vintage graphic tee under $30` now returns 3 results (all tees) instead of 10 that included a hoodie, a sweatshirt and a vest (`search_results: 3` in all 5 tries, against 10 before). The selected item was still the Graphic Tee — 2003 Tour Bootleg Style.
+- **The leather jacket query now behaves correctly.** `black leather jacket under $60` no longer picks Biker Shorts. The catalogue does hold one matching black leather jacket, but it costs $75, so the agent stopped in all 5 tries with: "1 items match 'black leather jacket', but the cheapest is $75.00 — over your $60.00 limit." The empty-results branch handled it without `suggest_outfit` being called.
+- **Criteria 1, 2, 4 and 5 still pass 5/5.** The stricter search did not break the happy path.
+- **Criterion 3 lost its test case.** That scenario used the leather jacket query, which used to "pass" only because the wrong item (the shorts) was carried through consistently. With the fix it correctly selects nothing, so there is no item to compare and I scored it n/a rather than PASS. The check itself still holds where an item is selected: in the 15 tries from the other three scenarios, the selected item matched the `suggest_outfit` input and the `create_fit_card` input every time (15/15). I have not changed the scenario or the criterion. Choosing a new query for criterion 3 is a separate decision, and I'd rather make it on purpose than slip it in.
+- **Cost of the change:** AND is stricter, so queries with extra words now return fewer results or none. `graphic tee` still returns the Mesh Long-Sleeve Top (it contains both words somewhere), so the mentor's example is only partly fixed.
 
 ---
 
