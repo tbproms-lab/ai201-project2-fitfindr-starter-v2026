@@ -200,6 +200,24 @@ It completely analyzed my criteria, telling me where the mesaureable gaps are in
 - *What I changed:*
 I updated my criteria to have more measurable outcomes. For example, for the critera on price, I clarified that price could be any kind- digits, hyphenated or non-hyphenated words.
 
+**Moment 3**
+
+- *What I asked for:*
+I told Claude to help analyze my run log against my criteria and help me analyze what passed or didn't.
+- *What came back:*
+I also looked through my run log to see what passed and didn't, Claude and I landed at the same conclusion for the criteria that passed.
+- *What I changed:*
+I updated the output it gave for the verdit and criteria because it was too chunky and wordy.
+
+**Moment 4**
+
+- *What I asked for:*
+I asked Claude to suggest ways to improve my search_listings code which was returning biker shorts for a queery on black leather jacket
+- *What came back:*
+It suggested a super complicated process that would invovle heavy coding and machinery to analyze head-nouns in querys.
+- *What I changed:*
+I decided to go with a switch for OR keyword matching on queries to a AND keyword matchign so that the search_listings searches for black and leather and jacket.
+
 <!-- ═══════════════════════ UNIT 4 — THE TEST ═══════════════════════
 
      Don't fill these in during unit 3.
