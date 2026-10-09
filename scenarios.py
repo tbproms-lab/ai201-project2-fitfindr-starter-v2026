@@ -29,13 +29,31 @@ SCENARIOS = [
         "criterion": 2,
     },
     {
-        # A user with nothing saved. One of unit 4's three failure modes.
-        "name": "empty wardrobe",
-        "query": "denim jacket under $50",
-        "wardrobe": "empty",
-        "criterion": None,
+        # A different, normal query so the selected item isn't always the same
+        # one. Compare session["selected_item"] with what suggest_outfit
+        # received. Criterion 3 — state matches across tools.
+        "name": "selected item reaches suggest_outfit",
+        "query": "black leather jacket under $60",
+        "wardrobe": "example",
+        "criterion": 3,
     },
-    # TODO: add what your criteria 3, 4 and 5 need.
+    {
+        # A normal query whose fit card is checked for the item's price, as
+        # digits or words. Criterion 4 — fit card includes the price.
+        "name": "fit card mentions price",
+        "query": "denim jacket under $50",
+        "wardrobe": "example",
+        "criterion": 4,
+    },
+    {
+        # A populated wardrobe gives the outfit tool something to pair with, so
+        # it should return at least two outfits. Criterion 5 — at least 2
+        # outfits suggested.
+        "name": "outfit tool suggests at least two outfits",
+        "query": "vintage graphic tee under $30",
+        "wardrobe": "example",
+        "criterion": 5,
+    },
     #
     # Set "criterion" to the number in criteria.md that the scenario tests.
     # "criterion": None means a diagnostic run — useful to have, but it isn't
