@@ -15,9 +15,9 @@ Build and test your three tools in `tools.py` first. Then come here.
 
 import json
 import re
-
 import config
 import trace
+from mcp_client import call_tool
 from tools import search_listings, suggest_outfit, create_fit_card
 from generate import generate, ModelUnavailable
 
@@ -247,11 +247,11 @@ def run_agent(query: str, wardrobe: dict) -> dict:
 
         elif stage == "search":
             filters = session["parsed"]
-            session["search_results"] = search_listings(
-                filters["description"],
-                size=filters["size"],
-                max_price=filters["max_price"],
-            )
+            session["search_results"] = call_tool("search_listings", {
+                "description": filters["description"],
+                "size": filters["size"],
+                "max_price": filters["max_price"],
+            })
 
             # ── THE BRANCH ───────────────────────────────────────────────────
             # Empty list → say what to change and stop. suggest_outfit never
