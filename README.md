@@ -441,7 +441,6 @@ It fixed the relevance problem, and it exposed a gap in how I measure criterion 
 - **Search results are tighter.** `vintage graphic tee under $30` now returns 3 results (all tees) instead of 10 that included a hoodie, a sweatshirt and a vest (`search_results: 3` in all 5 tries, against 10 before). The selected item was still the Graphic Tee — 2003 Tour Bootleg Style.
 - **The leather jacket query now behaves correctly.** `black leather jacket under $60` no longer picks Biker Shorts. The catalogue does hold one matching black leather jacket, but it costs $75, so the agent stopped in all 5 tries with: "1 items match 'black leather jacket', but the cheapest is $75.00 — over your $60.00 limit." The empty-results branch handled it without `suggest_outfit` being called.
 - **Criteria 1, 2, 4 and 5 still pass 5/5.** The stricter search did not break the happy path.
-- **Criterion 3 lost its test case.** That scenario used the leather jacket query, which used to "pass" only because the wrong item (the shorts) was carried through consistently. With the fix it correctly selects nothing, so there is no item to compare and I scored it n/a rather than PASS. The check itself still holds where an item is selected: in the 15 tries from the other three scenarios, the selected item matched the `suggest_outfit` input and the `create_fit_card` input every time (15/15). I have not changed the scenario or the criterion. Choosing a new query for criterion 3 is a separate decision, and I'd rather make it on purpose than slip it in.
 - **Cost of the change:** AND is stricter, so queries with extra words now return fewer results or none. `graphic tee` still returns the Mesh Long-Sleeve Top (it contains both words somewhere), so the mentor's example is only partly fixed.
 
 ---
@@ -452,7 +451,7 @@ It fixed the relevance problem, and it exposed a gap in how I measure criterion 
      you did. "I ran out of time" is fine if it's true. Pretending nothing is
      left is not. -->
 
-
+No criteria is missed with this new improvement, but Criterion 3 lost its test case. That scenario that initially passed in the run_log_before used the leather jacket query, which used to "pass" only because the wrong item (the shorts) was carried through consistently. With the fix it correctly selects nothing, so there is no item to compare and I scored it n/a rather than PASS. The check itself still holds where an item is selected: in the 15 tries from the other three scenarios, the selected item matched the `suggest_outfit` input and the `create_fit_card` input every time (15/15). I have not changed the scenario or the criterion. Choosing a new query for criterion 3 is a separate decision, and I'd rather make it on purpose than slip it in. So that is something I would consider still broken. If I could change more than one thing, I would change my scenarios to search for black leather jacket under $80, to see if the item would then go through all four model calls.
 
 <!-- ═════════════════════════════════════════════════════════════════════
 
