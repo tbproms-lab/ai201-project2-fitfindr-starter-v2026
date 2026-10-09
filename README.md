@@ -207,6 +207,30 @@ I updated my criteria to have more measurable outcomes. For example, for the cri
 
 ---
 
+## Three Failures Triggered
+**Empty Search**
+python app.py ask ' '
+
+  Nothing in the catalogue matches ' '. Try plainer garment words — 'denim jacket', 'graphic tee', 'cardigan' — or a category: tops, bottoms, outerwear, shoes,accessories.
+
+1 model calls this session, 249 prompt + 16 output tokens
+
+**Empty Wardrobe**
+python app.py ask '...' --empty-wardrobe
+(running with an empty wardrobe)
+
+  Nothing in the catalogue matches '...'. Try plainer garment words — 'denim jacket', 'graphic tee', 'cardigan' — or a category: tops, bottoms, outerwear, shoes, accessories.
+
+1 model calls this session, 249 prompt + 16 output token
+
+**Model Unavailable**
+python app.py ask "shorts"
+1 model calls this session
+
+ModelUnavailable: The model rejected your API key. Check GEMINI_API_KEY in your .env file, or create a fresh key at aistudio.google.com.
+
+(.venv) tolubakare@Mac ai201-project2-fitfindr-starter-v2026 % 
+
 ## Run Log — Before
 
 <!-- Five criteria, five tries each, in this exact format.
