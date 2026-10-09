@@ -244,17 +244,43 @@ ModelUnavailable: The model rejected your API key. Check GEMINI_API_KEY in your 
 
 | Criterion | Target | Try 1 | Try 2 | Try 3 | Try 4 | Try 5 | Verdict |
 |---|---|---|---|---|---|---|---|
-| 1.  |  |  |  |  |  |  |  |
-| 2.  |  |  |  |  |  |  |  |
-| 3.  |  |  |  |  |  |  |  |
-| 4.  |  |  |  |  |  |  |  |
-| 5.  |  |  |  |  |  |  |  |
+| 1. Matching query completes all three tools | 5 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
+| 2. Impossible query stops before `suggest_outfit` | 5 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
+| 3. Selected item reaches `suggest_outfit` | 5 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
+| 4. Fit card includes the item's price | 4 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
+| 5. At least two outfits suggested | 3 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
 
 **Real output from one try**, pasted as text, naming the file and function
 that produced it:
 
-```
+Source: `results/run_2026-10-08_2327_before.md`, scenario 1, Try 1 (query `vintage graphic tee under $30`). Produced by `run_eval.py::main` calling `agent.py::run_agent`; outfit text from `tools.py::suggest_outfit`, fit card from `tools.py::create_fit_card`, search via MCP (`mcp_server.py`).
 
+```
+[1] parse_query
+      in:  vintage graphic tee under $30
+      out: {'description': 'vintage graphic tee', 'size': None, 'max_price': 30.0}
+[2] search_listings (via MCP)
+      in:  {'description': 'vintage graphic tee', 'size': None, 'max_price': 30.0}
+      out: 10 items: Graphic Tee — 2003 Tour Bootleg Style, Vintage Band Tee — Faded Grey, Y2K Baby Tee — Butterfly Print … +7 more
+[3] select_item
+      out: Graphic Tee — 2003 Tour Bootleg Style ($24.0, depop)
+      →    branch: results found, taking the first
+[4] suggest_outfit
+      in:  Graphic Tee — 2003 Tour Bootleg Style
+      out: Outfit 1: Graphic Tee — 2003 Tour Bootleg Style + Baggy straight-leg jeans, dark wash + Black combat boots + B…
+[5] create_fit_card
+      in:  Graphic Tee — 2003 Tour Bootleg Style
+      out: I scored this graphic tee on depop for twenty-four dollars and the faded print feels properly broken in alread…
+
+suggest_outfit output:
+Outfit 1: Graphic Tee — 2003 Tour Bootleg Style + Baggy straight-leg jeans, dark wash + Black combat boots + Black crossbody bag
+Works because it leans fully into a grungy streetwear aesthetic with matching dark tones and textures.
+
+Outfit 2: Graphic Tee — 2003 Teo Bootleg Style layered under Black cropped zip hoodie + Wide-leg khaki trousers + Chunky white sneakers
+Works because the cropped hoodie balances the boxy tee and the khaki trousers add a clean contrast.
+
+create_fit_card output:
+I scored this graphic tee on depop for twenty-four dollars and the faded print feels properly broken in already. It has that boxy cut I like, so I threw it on with baggy straight-leg jeans and black combat boots for tonight's gig.
 ```
 
 ---
@@ -279,15 +305,31 @@ that produced it:
 
 | # | Criterion | Target | Verdict | How I decided |
 |---|---|---|---|---|
-| 1 |  |  |  |  |
-| 2 |  |  |  |  |
-| 3 |  |  |  |  |
-| 4 |  |  |  |  |
-| 5 |  |  |  |  |
+| 1 | Matching query completes all three tools | 5 of 5 | MET | 5/5 tries on `vintage graphic tee under $30`: the trace shows `search_listings`, `suggest_outfit` and `create_fit_card` all called and a fit card returned. |
+| 2 | Impossible query stops before `suggest_outfit` | 5 of 5 | MET | 5/5 tries on `designer ballgown size XXS under $5`: search returned `[]`, the trace ends at the empty-results branch with "suggest_outfit not called", and the message names "designer ballgown". |
+| 3 | Selected item reaches `suggest_outfit` | 5 of 5 | MET | 5/5 tries: the title in `selected_item` was identical to the `in:` line of both `suggest_outfit` and `create_fit_card` in every trace. |
+| 4 | Fit card includes the price | 4 of 5 | MET | 5/5 fit cards on `denim jacket under $50` stated the $42 price ("forty-two dollars"). Beat the target of 4. |
+| 5 | At least two outfits suggested | 3 of 5 | MET | 5/5 `suggest_outfit` outputs on `vintage graphic tee under $30` contained "Outfit 1" and "Outfit 2". Beat the target of 3. |
 
 **Diagnoses**
 
+No criterion was missed, so there is nothing to diagnose against my targets. But all five criteria are met while the agent still gives a wrong answer, which means my criteria test the plumbing (did the tools run, did the state carry over, did the output have the right shape) and none of them tests whether the search result is *relevant*.
 
+Two runs show it:
+
+- `black leather jacket under $60` selected **Biker Shorts — Black, Shiny** ($14, depop) in all 5 tries. Criterion 3 passed, because the shorts really were what reached `suggest_outfit`, and criteria 1, 4 and 5 passed on the shorts too. The agent then built outfits and a fit card around an item the user didn't ask for.
+- My mentor pointed out that `search_listings('graphic tee', max_price=30)` returns low-rise cargo pants and a mesh long-sleeve, because the word "tee" appears in their descriptions.
+
+**Where:** the tool, `tools.py::search_listings` (with `_score`), not the loop, the session or the model. The loop branched correctly and the state carried over correctly. The tool handed it a bad list.
+
+**Mechanism:** `_score` adds up points for every keyword that lands in any field (title 3, style_tags 3, category 2, colors 2, brand 2, description 1), and `search_listings` keeps anything that scores above zero. Two consequences:
+
+1. Matching is OR, not AND. A listing needs only one of the query words, and the query words are not equal. "black" is a colour, and it scores in a listing's title and colors at once, so a black item can outscore a real jacket on "black" alone. In the leather jacket query, the shorts ranked first because "black" matched, and the head noun ("jacket") did not have to match anywhere.
+2. A single stray word still gets a listing in. "tee" appearing once in a cargo pants description scores 1, which is above the zero cutoff, so the pants are returned alongside the real tees.
+
+`select_item` then takes the first result without checking it, so a wrong top result flows through all three tools without anything flagging it. The tools were all doing their jobs on the wrong item.
+
+**Pattern:** this is one problem, not several, and it is in one place: how `search_listings` ranks and filters. That is the improvement I'll make.
 
 ---
 

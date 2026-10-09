@@ -92,13 +92,17 @@ def _word_matches(keyword: str, word: str) -> bool:
     return keyword == word or keyword == word + "s" or word == keyword + "s"
 
 def _score(keywords: set[str], listing: dict) -> int:
-    """How well one listing answers the keywords. Zero means no overlap at all."""
+    """How well one listing answers the keywords. Zero means at least one keyword had no match."""
     total = 0
-    for field, weight in _FIELD_WEIGHTS.items():
-        words = _keywords(_field_text(listing, field))
-        for keyword in keywords:
+    for keyword in keywords:
+        keyword_score = 0
+        for field, weight in _FIELD_WEIGHTS.items():
+            words = _keywords(_field_text(listing, field))
             if any(_word_matches(keyword, word) for word in words):
-                total += weight
+                keyword_score += weight
+        if keyword_score == 0:
+            return 0  # every keyword must match somewhere (AND, not OR)
+        total += keyword_score
     return total
 
 def search_listings(
