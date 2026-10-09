@@ -313,21 +313,11 @@ I scored this graphic tee on depop for twenty-four dollars and the faded print f
 
 **Diagnoses**
 
-No criterion was missed, so there is nothing to diagnose against my targets. But all five criteria are met while the agent still gives a wrong answer, which means my criteria test the plumbing (did the tools run, did the state carry over, did the output have the right shape) and none of them tests whether the search result is *relevant*.
+No criterion was missed, so there is nothing to diagnose against my targets. But all five criteria are met while the agent still gives a wrong answer, which means my criteria test the plumbing (did the tools run, did the state carry over, did the output have the right shape) and none of them tests whether the search result is relevant.
 
 Two runs show it:
 
 - `black leather jacket under $60` selected **Biker Shorts — Black, Shiny** ($14, depop) in all 5 tries. Criterion 3 passed, because the shorts really were what reached `suggest_outfit`, and criteria 1, 4 and 5 passed on the shorts too. The agent then built outfits and a fit card around an item the user didn't ask for.
-- My mentor pointed out that `search_listings('graphic tee', max_price=30)` returns low-rise cargo pants and a mesh long-sleeve, because the word "tee" appears in their descriptions.
-
-**Where:** the tool, `tools.py::search_listings` (with `_score`), not the loop, the session or the model. The loop branched correctly and the state carried over correctly. The tool handed it a bad list.
-
-**Mechanism:** `_score` adds up points for every keyword that lands in any field (title 3, style_tags 3, category 2, colors 2, brand 2, description 1), and `search_listings` keeps anything that scores above zero. Two consequences:
-
-1. Matching is OR, not AND. A listing needs only one of the query words, and the query words are not equal. "black" is a colour, and it scores in a listing's title and colors at once, so a black item can outscore a real jacket on "black" alone. In the leather jacket query, the shorts ranked first because "black" matched, and the head noun ("jacket") did not have to match anywhere.
-2. A single stray word still gets a listing in. "tee" appearing once in a cargo pants description scores 1, which is above the zero cutoff, so the pants are returned alongside the real tees.
-
-`select_item` then takes the first result without checking it, so a wrong top result flows through all three tools without anything flagging it. The tools were all doing their jobs on the wrong item.
 
 **Pattern:** this is one problem, not several, and it is in one place: how `search_listings` ranks and filters. That is the improvement I'll make.
 
