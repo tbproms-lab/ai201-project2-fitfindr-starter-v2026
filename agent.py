@@ -243,6 +243,8 @@ def run_agent(query: str, wardrobe: dict) -> dict:
 
         if stage == "parse":
             session["parsed"] = _parse_query(session["query"])
+            trace.step("parse_query", inputs=session["query"],
+                       returned=str(session["parsed"]))
             stage = "search"
 
         elif stage == "search":
@@ -253,26 +255,39 @@ def run_agent(query: str, wardrobe: dict) -> dict:
                 "max_price": filters["max_price"],
             })
 
+            trace.step("search_listings (via MCP)", inputs=str(filters),
+                       returned=session["search_results"])
+
             # ── THE BRANCH ───────────────────────────────────────────────────
             # Empty list → say what to change and stop. suggest_outfit never
             # gets called with nothing.
             if not session["search_results"]:
                 session["error"] = _why_nothing_matched(filters)
+                trace.step("branch: empty results", returned=session["error"],
+                           note="stopping — suggest_outfit not called")
                 stage = "done"
             else:
                 session["selected_item"] = session["search_results"][0]
+                trace.step("select_item", returned=session["selected_item"],
+                           note="branch: results found, taking the first")
                 stage = "suggest"
 
         elif stage == "suggest":
             session["outfit_suggestion"] = suggest_outfit(
                 session["selected_item"], session["wardrobe"]
             )
+            trace.step("suggest_outfit",
+                       inputs=session["selected_item"]["title"],
+                       returned=session["outfit_suggestion"])
             stage = "card"
 
         elif stage == "card":
             session["fit_card"] = create_fit_card(
                 session["outfit_suggestion"], session["selected_item"]
             )
+            trace.step("create_fit_card",
+                       inputs=session["selected_item"]["title"],
+                       returned=session["fit_card"])
             stage = "done"
 
     return session

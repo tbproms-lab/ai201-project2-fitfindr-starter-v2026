@@ -306,21 +306,54 @@ that produced it:
 **Happy path**
 
 ```
+[1] parse_query
+      in:  vintage graphic tee under $30, size M
+      out: {'description': 'vintage graphic tee', 'size': 'M', 'max_price': 30.0}
+[2] search_listings (via MCP)
+      in:  {'description': 'vintage graphic tee', 'size': 'M', 'max_price': 30.0}
+      out: 10 items: Y2K Baby Tee — Butterfly Print, Vintage Knit Vest — Argyle Brown/Cream, Vintage Polo Shirt — Forest Green … +7 more
+[3] select_item
+      out: Y2K Baby Tee — Butterfly Print ($18.0, depop)
+      →    branch: results found, taking the first
+[4] suggest_outfit
+      in:  Y2K Baby Tee — Butterfly Print
+      out: Outfit 1: Y2K Baby Tee — Butterfly Print paired with Baggy straight-leg jeans, dark wash, Chunky white sneaker…
+[5] create_fit_card
+      in:  Y2K Baby Tee — Butterfly Print
+      out: Scored this Y2K baby tee on depop for eighteen dollars and I am obsessed with the little butterfly print. It f…
 
+  Found:    Y2K Baby Tee — Butterfly Print — $18.0 on depop
+
+  Outfit:   Outfit 1: Y2K Baby Tee — Butterfly Print paired with Baggy straight-leg jeans, dark wash, Chunky white sneakers, and Black crossbody bag.
+Why it works: The fitted crop balances the baggy indigo denim for an authentic Y2K streetwear silhouette.
+
+Outfit 2: Y2K Baby Tee — Butterfly Print layered under Oversized grey crewneck sweatshirt, worn with Wide-leg khaki trousers, Chunky white sneakers, and Black crossbody bag.
+Why it works: The pastel butterfly graphic pops against grey and khaki, and layering a baby tee under an oversized crewneck plays with proportions.
+
+Wear these for casual daytime outings like running errands, thrift shopping, or meeting friends for coffee.
+
+  Fit card: Scored this Y2K baby tee on depop for eighteen dollars and I am obsessed with the little butterfly print. It fits like a dream under my oversized grey crewneck sweatshirt for coffee runs today. The pastel colors look so good against khaki trousers.
 ```
 
 **Empty search**
 
 ```
+[1] parse_query
+      in:  designer ballgown size XXS under $5
+      out: {'description': 'designer ballgown', 'size': 'XXS', 'max_price': 5.0}
+[2] search_listings (via MCP)
+      in:  {'description': 'designer ballgown', 'size': 'XXS', 'max_price': 5.0}
+      out: [] (empty)
+[3] branch: empty results
+      out: Nothing in the catalogue matches 'designer ballgown'. Try plainer garment words — 'denim jacket', 'graphic tee…
+      →    stopping — suggest_outfit not called
 
+  Nothing in the catalogue matches 'designer ballgown'. Try plainer garment words — 'denim jacket', 'graphic tee', 'cardigan' — or a category: tops, bottoms, outerwear, shoes, accessories.
 ```
 
-**On the MCP move:** <!-- what changed in your code, and whether anything
-behaved differently afterwards. If the rewire didn't work, say exactly where it
-broke — the error text and the last thing that worked. That earns the point in
-full. -->
+**On the MCP move:** <!-- what changed in your code, and whether anything behaved differently afterwards. If the rewire didn't work, say exactly where it broke — the error text and the last thing that worked. That earns the point infull. -->
 
-
+search_listings used to be imported and called directly in agent.py. I moved it behind mcp_server.py (tool description plus typed inputs for description, size and max_price), and run_agent() now calls it with call_tool("search_listings", {...}) from mcp_client.py. The trace labels this step search_listings (via MCP). Nothing behaved differently. One thing that stayed local: _why_nothing_matched still calls search_listings directly to diagnose empty results, so those re-runs don't go over MCP.
 
 ---
 
